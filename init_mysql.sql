@@ -246,3 +246,19 @@ CREATE TABLE `fabrication_quotes` (
     `estimated_quote` DECIMAL(10, 2),
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 14. Inquiries
+DROP TABLE IF EXISTS `inquiries`;
+CREATE TABLE `inquiries` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(150) NOT NULL,
+    `email` VARCHAR(150) NOT NULL,
+    `phone` VARCHAR(50),
+    `subject` VARCHAR(255),
+    `service` VARCHAR(100),
+    `message` TEXT NOT NULL,
+    `status` VARCHAR(30) DEFAULT 'Unread',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

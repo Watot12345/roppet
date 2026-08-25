@@ -202,6 +202,20 @@ try {
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 INDEX (created_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ",
+        "inquiries" => "
+            CREATE TABLE IF NOT EXISTS inquiries (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(150) NOT NULL,
+                email VARCHAR(150) NOT NULL,
+                phone VARCHAR(50),
+                subject VARCHAR(255),
+                service VARCHAR(100),
+                message TEXT NOT NULL,
+                status VARCHAR(30) DEFAULT 'Unread',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                INDEX (status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         "
     ];
 
@@ -232,7 +246,8 @@ try {
         'payments',
         'reviews',
         'gallery_items',
-        'activity_logs'
+        'activity_logs',
+        'inquiries'
     ];
 
     foreach ($tablesToSync as $tbl) {
