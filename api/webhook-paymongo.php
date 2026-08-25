@@ -67,7 +67,10 @@ if ($eventType === 'checkout_session.payment.paid') {
 
                 $pdo->commit();
 
-                // 3. Log staff activity
+                // 3. Send Official Receipt Email to Client (Phase 4)
+                sendPaymentReceiptToClient($booking, $amountPaid, ucfirst($paymentSource), $refCode);
+
+                // 4. Log staff activity
                 logStaffActivity('System / PayMongo Webhook', 'Auto Verified Payment', "Ref: {$refCode}, Amount: ₱{$amountPaid} via {$paymentSource}");
             } else {
                 $pdo->rollBack();

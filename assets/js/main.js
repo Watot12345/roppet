@@ -229,12 +229,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Date Availability Live Check
+  // Date Availability Live Check (Phase 3)
   if (dateInput && dateBadge) {
+    const bookSubmitBtn = bookingForm ? bookingForm.querySelector('button[type="submit"]') : null;
+
     dateInput.addEventListener('change', async () => {
       const dt = dateInput.value;
       if (!dt) {
         dateBadge.style.display = 'none';
+        if (bookSubmitBtn) bookSubmitBtn.disabled = false;
         return;
       }
       dateBadge.style.display = 'inline-block';
@@ -248,19 +251,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.success) {
           dateBadge.style.display = 'inline-block';
           dateBadge.textContent = data.status;
-          if (data.status === 'Available') {
-            dateBadge.style.background = '#dcfce7';
-            dateBadge.style.color = '#166534';
-          } else if (data.status === 'High Demand') {
-            dateBadge.style.background = '#fef3c7';
-            dateBadge.style.color = '#92400e';
-          } else {
-            dateBadge.style.background = '#fee2e2';
-            dateBadge.style.color = '#991b1b';
+          dateBadge.style.color = data.color || '#166534';
+          dateBadge.style.background = data.can_book ? (data.remaining_slots <= 2 ? '#fef3c7' : '#dcfce7') : '#fee2e2';
+
+          if (bookSubmitBtn) {
+            if (!data.can_book) {
+              bookSubmitBtn.disabled = true;
+              bookSubmitBtn.title = data.message || 'Date is fully booked';
+            } else {
+              bookSubmitBtn.disabled = false;
+              bookSubmitBtn.title = '';
+            }
           }
         }
       } catch (e) {
         dateBadge.style.display = 'none';
+        if (bookSubmitBtn) bookSubmitBtn.disabled = false;
       }
     });
   }

@@ -68,6 +68,35 @@ if (strpos($pkgLower, 'bubble') !== false) {
 try {
     $pdo = getDBConnection();
 
+    // 1. Capacity & Blackout Date Guard (Phase 3)
+    $maxShowsPerDay = intval(getSystemSetting('max_shows_per_day', 5));
+    if ($maxShowsPerDay <= 0) $maxShowsPerDay = 5;
+
+    $blackoutStr = getSystemSetting('blackout_dates', '2026-12-25,2027-01-01');
+    $blackoutDates = array_filter(array_map('trim', explode(',', $blackoutStr)));
+
+    if (in_array($eventDate, $blackoutDates)) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Our theater and performers are on holiday break on this date. Please choose an alternative date.'
+        ]);
+        exit;
+    }
+
+    $stmtCap = $pdo->prepare("SELECT COUNT(*) FROM bookings WHERE event_date = :dt AND status NOT IN ('Cancelled')");
+    $stmtCap->execute([':dt' => $eventDate]);
+    $activeOnDate = (int)$stmtCap->fetchColumn();
+
+    if ($activeOnDate >= $maxShowsPerDay) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => "This date has reached maximum production capacity ({$maxShowsPerDay} shows). Please select another date or contact our office."
+        ]);
+        exit;
+    }
+
     // Generate unique reference code: ROP-YYYY-XXXX (e.g. ROP-2026-8912)
     $year = date('Y');
     $isUnique = false;
@@ -120,7 +149,8 @@ try {
         'name' => $name,
         'email' => $email,
         'event_date' => $eventDate,
-        'service_package' => $servicePackage
+        'service_package' => $servicePackage,
+        'total_price' => $estimatedPrice
     ]);
 
     echo json_encode([

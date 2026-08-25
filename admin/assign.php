@@ -38,7 +38,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 VALUES (?, ?, ?, ?)
             ");
             $ins->execute([$bookingId, $performerId, $role, $notes]);
-            $message = "Crew member assigned to this show!";
+
+            // Dispatch briefing email to performer if email exists
+            require_once __DIR__ . '/../includes/mailer.php';
+            $pStmt = $pdo->prepare("SELECT name, email FROM performers WHERE id = ?");
+            $pStmt->execute([$performerId]);
+            $perfData = $pStmt->fetch();
+            if ($perfData && !empty($perfData['email'])) {
+                sendPerformerDispatchBriefing($b, $perfData['email'], $perfData['name'], $role);
+            }
+            logStaffActivity('Admin', 'Assigned Performer', "Assigned {$perfData['name']} as {$role} to Ref: {$b['reference_code']}");
+
+            $message = "Crew member assigned and show briefing notification sent!";
         } else {
             $error = "Please select a performer and role.";
         }
