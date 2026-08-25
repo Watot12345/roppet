@@ -1,27 +1,41 @@
 <?php
 /**
  * Roppets Edutainment Production Inc.
- * Database Connection using PDO PostgreSQL (Neon DB)
+ * Dual-Engine Database Connector (PostgreSQL / Neon & MySQL / MariaDB)
  */
 
-define('DB_HOST', getenv('DB_HOST') ?: 'ep-wild-wind-ayk3w0b8.c-5.us-east-2.aws.neon.tech');
-define('DB_PORT', getenv('DB_PORT') ?: '5432');
-define('DB_NAME', getenv('DB_NAME') ?: 'neondb');
-define('DB_USER', getenv('DB_USER') ?: 'neondb_owner');
-define('DB_PASS', getenv('DB_PASS') ?: 'npg_38tOXpeWgyQo');
-define('DB_SSLMODE', getenv('DB_SSLMODE') ?: 'require');
+// 1. Simple Environment Variables (.env) Loader
+(function() {
+    $envFile = __DIR__ . '/../.env';
+    if (file_exists($envFile)) {
+        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line) || $line[0] === '#') continue;
+            if (strpos($line, '=') !== false) {
+                list($key, $val) = explode('=', $line, 2);
+                $key = trim($key);
+                $val = trim($val, " \t\n\r\0\x0B\"'");
+                if (!isset($_ENV[$key]) && !getenv($key)) {
+                    putenv("{$key}={$val}");
+                    $_ENV[$key] = $val;
+                }
+            }
+        }
+    }
+})();
+
+// 2. Active Driver Determination ('pgsql' or 'mysql')
+define('DB_DRIVER', getenv('DB_DRIVER') ?: 'pgsql');
+
+function getDBDriver() {
+    return strtolower(DB_DRIVER);
+}
 
 function getDBConnection() {
     static $pdo = null;
     if ($pdo === null) {
-        $dsn = sprintf(
-            "pgsql:host=%s;port=%s;dbname=%s;sslmode=%s",
-            DB_HOST,
-            DB_PORT,
-            DB_NAME,
-            DB_SSLMODE
-        );
-
+        $driver = getDBDriver();
         $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -29,15 +43,38 @@ function getDBConnection() {
         ];
 
         try {
-            $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+            if ($driver === 'mysql') {
+                $host = getenv('MYSQL_HOST') ?: (getenv('DB_HOST') ?: '127.0.0.1');
+                $port = getenv('MYSQL_PORT') ?: '3306';
+                $name = getenv('MYSQL_NAME') ?: 'roppet_db';
+                $user = getenv('MYSQL_USER') ?: 'root';
+                $pass = getenv('MYSQL_PASS') ?: '';
+                
+                $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
+                $pdo = new PDO($dsn, $user, $pass, $options);
+            } else {
+                // Default: PostgreSQL / Neon Cloud DB
+                $host = getenv('DB_HOST') ?: 'ep-wild-wind-ayk3w0b8.c-5.us-east-2.aws.neon.tech';
+                $port = getenv('DB_PORT') ?: '5432';
+                $name = getenv('DB_NAME') ?: 'neondb';
+                $user = getenv('DB_USER') ?: 'neondb_owner';
+                $pass = getenv('DB_PASS') ?: '';
+                $sslmode = getenv('DB_SSLMODE') ?: 'require';
+
+                $dsn = "pgsql:host={$host};port={$port};dbname={$name};sslmode={$sslmode}";
+                $pdo = new PDO($dsn, $user, $pass, $options);
+            }
         } catch (PDOException $e) {
-            error_log("Database connection error: " . $e->getMessage());
-            throw new Exception("Database connection failed. Please try again later.");
+            error_log("Database connection error ({$driver}): " . $e->getMessage());
+            throw new Exception("Database connection failed ({$driver}). Please verify database credentials.");
         }
     }
     return $pdo;
 }
 
+/**
+ * Global System Settings Helper
+ */
 function getSystemSetting($key, $default = '') {
     try {
         $pdo = getDBConnection();
@@ -49,4 +86,3 @@ function getSystemSetting($key, $default = '') {
         return $default;
     }
 }
-

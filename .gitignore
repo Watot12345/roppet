@@ -1,0 +1,18 @@
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+
+# Mail Logs & Audit Logs
+uploads/mail_logs.txt
+
+# Uploaded Media (Preserve directory structure)
+uploads/receipts/*
+!uploads/receipts/.gitkeep
+uploads/blueprints/*
+!uploads/blueprints/.gitkeep
+
+# System & Editor files
+.DS_Store
+Thumbs.db
+*.log
