@@ -150,7 +150,21 @@ function sendViaSmtpSocket($host, $port, $user, $pass, $fromEmail, $fromName, $t
 }
 
 /**
- * 1. Booking Received & Formal Quotation Email
+ * Dynamic Website Base URL Helper
+ */
+function getBaseSiteUrl() {
+    $proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    $dir = str_replace('\\', '/', dirname($script));
+    $basePath = ($dir === '/' || $dir === '' || $dir === '/api' || $dir === '/admin') ? '' : $dir;
+    // Strip trailing /api or /admin if present
+    $basePath = preg_replace('#/(api|admin)$#', '', $basePath);
+    return rtrim($proto . $host . $basePath, '/');
+}
+
+/**
+ * 1. Booking Received & Formal Quotation Email (Client)
  */
 function sendBookingConfirmationToClient($booking) {
     $ref = $booking['reference_code'];
@@ -159,6 +173,7 @@ function sendBookingConfirmationToClient($booking) {
     $pkg = htmlspecialchars($booking['service_package']);
     $price = number_format(floatval($booking['total_price'] ?? 0), 2);
     $downpayment = number_format(floatval($booking['total_price'] ?? 0) * 0.5, 2);
+    $baseUrl = getBaseSiteUrl();
 
     $subject = "Booking Quotation [{$ref}] - Roppets Edutainment Production";
     $html = "
@@ -185,9 +200,9 @@ function sendBookingConfirmationToClient($booking) {
             <p>To lock in your schedule and confirm your cast of puppeteers, please view your formal quotation and complete the 50% reservation deposit:</p>
             
             <div style='text-align: center; margin: 25px 0;'>
-                <a href='http://localhost/roppet/track.php?ref={$ref}' style='display: inline-block; background: #852e70; color: #ffffff; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px;'>Track Booking & Pay Downpayment</a>
+                <a href='{$baseUrl}/track.php?ref={$ref}' style='display: inline-block; background: #852e70; color: #ffffff; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px;'>Track Booking & Pay Downpayment</a>
                 &nbsp;
-                <a href='http://localhost/roppet/invoice.php?ref={$ref}' style='display: inline-block; background: #f1f5f9; color: #334155; padding: 12px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 1px solid #cbd5e1;'>View Official Quotation</a>
+                <a href='{$baseUrl}/invoice.php?ref={$ref}' style='display: inline-block; background: #f1f5f9; color: #334155; padding: 12px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 1px solid #cbd5e1;'>View Official Quotation</a>
             </div>
 
             <p style='font-size: 13px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 25px;'>
@@ -202,6 +217,64 @@ function sendBookingConfirmationToClient($booking) {
 }
 
 /**
+ * 1.5. New Booking Company / Admin Alert Email
+ */
+function sendAdminBookingAlert($booking) {
+    $companyEmail = getSystemSetting('company_email', getenv('SMTP_FROM') ?: 'edutainment@roppets.com');
+    $companyName = getSystemSetting('company_name', 'Roppets Production Management');
+    
+    $ref = $booking['reference_code'];
+    $clientName = htmlspecialchars($booking['name']);
+    $clientPhone = htmlspecialchars($booking['phone']);
+    $clientEmail = htmlspecialchars($booking['email']);
+    $date = date('F d, Y (l)', strtotime($booking['event_date']));
+    $eventType = htmlspecialchars($booking['event_type'] ?? 'Event');
+    $pkg = htmlspecialchars($booking['service_package']);
+    $location = htmlspecialchars($booking['location'] ?? 'To be confirmed');
+    $guestCount = htmlspecialchars($booking['guest_count'] ?? 'N/A');
+    $notes = nl2br(htmlspecialchars($booking['notes'] ?? 'None'));
+    $price = number_format(floatval($booking['total_price'] ?? 0), 2);
+    $downpayment = number_format(floatval($booking['total_price'] ?? 0) * 0.5, 2);
+
+    $baseUrl = getBaseSiteUrl();
+    $adminBookingUrl = "{$baseUrl}/admin/bookings.php";
+
+    $subject = "🚨 NEW BOOKING ALERT [{$ref}] - {$clientName} ({$date})";
+    $html = "
+    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;'>
+        <div style='background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: #ffffff; padding: 22px; text-align: center;'>
+            <h3 style='margin: 0; font-size: 20px; color: #f59e0b;'>⭐ New Online Booking Received!</h3>
+            <p style='margin: 4px 0 0 0; font-size: 13px; color: #cbd5e1;'>Reference: <strong>{$ref}</strong></p>
+        </div>
+        <div style='padding: 25px; color: #334155; line-height: 1.6;'>
+            <p>A new event booking reservation was just submitted on the website:</p>
+
+            <table style='width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px;'>
+                <tr><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; width: 35%; font-weight: bold; color: #64748b;'>Reference Code:</td><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #852e70;'>{$ref}</td></tr>
+                <tr><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;'>Client Name:</td><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold;'>{$clientName}</td></tr>
+                <tr><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;'>Contact Phone:</td><td style='padding: 8px; border-bottom: 1px solid #f1f5f9;'><a href='tel:{$clientPhone}' style='color: #2563eb;'>{$clientPhone}</a></td></tr>
+                <tr><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;'>Contact Email:</td><td style='padding: 8px; border-bottom: 1px solid #f1f5f9;'><a href='mailto:{$clientEmail}' style='color: #2563eb;'>{$clientEmail}</a></td></tr>
+                <tr><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;'>Event Date:</td><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; color: #b45309; font-weight: bold;'>{$date}</td></tr>
+                <tr><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;'>Event Type:</td><td style='padding: 8px; border-bottom: 1px solid #f1f5f9;'>{$eventType}</td></tr>
+                <tr><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;'>Show / Package:</td><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold;'>{$pkg}</td></tr>
+                <tr><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;'>Venue / Location:</td><td style='padding: 8px; border-bottom: 1px solid #f1f5f9;'>{$location}</td></tr>
+                <tr><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;'>Guest Count:</td><td style='padding: 8px; border-bottom: 1px solid #f1f5f9;'>{$guestCount} guests</td></tr>
+                <tr><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;'>Total Price:</td><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 15px; font-weight: bold; color: #166534;'>₱{$price}</td></tr>
+                <tr><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;'>50% Downpayment:</td><td style='padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #166534;'>₱{$downpayment}</td></tr>
+                <tr><td style='padding: 8px; font-weight: bold; color: #64748b;'>Special Notes:</td><td style='padding: 8px;'>{$notes}</td></tr>
+            </table>
+
+            <div style='text-align: center; margin: 25px 0;'>
+                <a href='{$adminBookingUrl}' style='display: inline-block; background: #852e70; color: #ffffff; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px;'>Open Admin Dashboard to Review</a>
+            </div>
+        </div>
+    </div>
+    ";
+
+    return sendNotificationEmail($companyEmail, $companyName, $subject, $html);
+}
+
+/**
  * 2. Official Payment Receipt Email
  */
 function sendPaymentReceiptToClient($booking, $amountPaid, $paymentMethod, $refCode) {
@@ -209,6 +282,7 @@ function sendPaymentReceiptToClient($booking, $amountPaid, $paymentMethod, $refC
     $date = date('F d, Y', strtotime($booking['event_date']));
     $pkg = htmlspecialchars($booking['service_package']);
     $amountFormatted = number_format(floatval($amountPaid), 2);
+    $baseUrl = getBaseSiteUrl();
 
     $subject = "Official Payment Receipt [{$refCode}] - Roppets Edutainment Production";
     $html = "
@@ -230,7 +304,7 @@ function sendPaymentReceiptToClient($booking, $amountPaid, $paymentMethod, $refC
             </div>
 
             <p style='text-align: center; margin: 25px 0;'>
-                <a href='http://localhost/roppet/invoice.php?ref={$refCode}' style='display: inline-block; background: #166534; color: #ffffff; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold;'>Download Official Receipt & Contract</a>
+                <a href='{$baseUrl}/invoice.php?ref={$refCode}' style='display: inline-block; background: #166534; color: #ffffff; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold;'>Download Official Receipt & Contract</a>
             </p>
 
             <p>Our production coordinator will contact you 3 days prior to the event for final logistics and performer call time briefing.</p>

@@ -148,15 +148,25 @@ try {
         $bookingId = $stmtId->fetchColumn();
     }
 
-    // Trigger Client Email Notification
-    sendBookingConfirmationToClient([
+    $bookingData = [
         'reference_code' => $refCode,
         'name' => $name,
+        'phone' => $phone,
         'email' => $email,
         'event_date' => $eventDate,
+        'event_type' => $eventType,
         'service_package' => $servicePackage,
+        'location' => $location,
+        'guest_count' => $guestCount,
+        'notes' => $notes,
         'total_price' => $estimatedPrice
-    ]);
+    ];
+
+    // 1. Trigger Client Confirmation & Quotation Email
+    sendBookingConfirmationToClient($bookingData);
+
+    // 2. Trigger Company / Admin New Booking Alert Email
+    sendAdminBookingAlert($bookingData);
 
     echo json_encode([
         'success' => true,
