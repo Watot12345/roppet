@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if ($id > 0) {
             $stmt = $pdo->prepare("
                 UPDATE packages
-                SET name = ?, slug = ?, subtitle = ?, price = ?, features = ?, is_popular = ?::boolean, is_active = ?::boolean
+                SET name = ?, slug = ?, subtitle = ?, price = ?, features = ?, is_popular = ?, is_active = ?
                 WHERE id = ?
             ");
             $stmt->execute([$name, $slug, $subtitle, $price, $features, $isPopular, $isActive, $id]);
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         } else {
             $stmt = $pdo->prepare("
                 INSERT INTO packages (name, slug, subtitle, price, features, is_popular, is_active)
-                VALUES (?, ?, ?, ?, ?, ?::boolean, ?::boolean)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([$name, $slug, $subtitle, $price, $features, $isPopular, $isActive]);
             $message = "New package created!";

@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $revId = intval($_POST['review_id'] ?? 0);
     if ($_POST['action'] === 'toggle_approval') {
         $status = intval($_POST['is_approved'] ?? 0);
-        $stmt = $pdo->prepare("UPDATE reviews SET is_approved = ?::boolean WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE reviews SET is_approved = ? WHERE id = ?");
         $stmt->execute([$status, $revId]);
         $message = "Review approval status updated.";
     } elseif ($_POST['action'] === 'delete') {

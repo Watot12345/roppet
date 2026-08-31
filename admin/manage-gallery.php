@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if (!empty($title) && !empty($mediaUrl)) {
             $stmt = $pdo->prepare("
                 INSERT INTO gallery_items (title, category, media_type, media_url, caption, is_featured)
-                VALUES (?, ?, 'image', ?, ?, ?::boolean)
+                VALUES (?, ?, 'image', ?, ?, ?)
             ");
             $stmt->execute([$title, $category, $mediaUrl, $caption, $isFeatured]);
             $message = "New media item added to the gallery!";
@@ -92,14 +92,36 @@ $galleryItems = $pdo->query("SELECT * FROM gallery_items ORDER BY id DESC")->fet
         </select>
       </div>
 
-      <div style="margin-bottom: 14px;">
-        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Upload Image (JPG, PNG, WEBP)</label>
-        <input type="file" name="media_file" accept="image/*" style="width: 100%; padding: 8px 12px; border: 1px solid var(--admin-border); border-radius: 6px; font-family: inherit;">
-      </div>
+      <!-- Drag & Drop Gallery Uploader -->
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Media Photo *</label>
+        
+        <div id="galleryDropZone" style="border: 2px dashed #cbd5e1; border-radius: 10px; padding: 18px 14px; text-align: center; background: #fafafa; cursor: pointer; transition: all 0.2s ease;">
+          <input type="file" id="galleryFileInput" name="media_file" accept="image/*" style="display: none;">
+          
+          <div id="galleryPrompt" style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(133,46,112,0.1); color: var(--admin-primary); display: flex; align-items: center; justify-content: center; font-size: 18px;">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <div style="font-size: 13px;">
+              <span style="font-weight: 600; color: var(--admin-primary);">Drag & drop photo here</span>, or <span style="text-decoration: underline; color: #2563eb;">browse</span>
+            </div>
+            <small style="color: var(--admin-muted); font-size: 11px;">JPG, PNG, WEBP, MP4 (Max 10MB)</small>
+          </div>
 
-      <div style="margin-bottom: 14px;">
-        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Or External Image URL / Asset Path</label>
-        <input type="text" name="custom_url" placeholder="assets/images/..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--admin-border); border-radius: 6px; font-family: inherit;">
+          <div id="galleryPreview" style="display: none; align-items: center; gap: 12px; text-align: left; background: #fff; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--admin-border);">
+            <img id="galleryPreviewImg" src="" alt="Preview" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <div style="flex: 1; min-width: 0;">
+              <strong id="galleryFileName" style="display: block; font-size: 12.5px; color: var(--admin-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></strong>
+              <small id="galleryFileSize" style="color: var(--admin-muted); font-size: 11px;"></small>
+            </div>
+            <button type="button" onclick="clearGalleryImage(event)" style="background: #fee2e2; border: none; color: #991b1b; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">&times;</button>
+          </div>
+        </div>
+
+        <div style="margin-top: 8px;">
+          <input type="text" id="galleryCustomUrl" name="custom_url" placeholder="Or enter image path / URL: assets/images/..." style="width: 100%; padding: 7px 12px; font-size: 12px; border: 1px solid var(--admin-border); border-radius: 6px; font-family: monospace; color: #64748b; background: #fff;">
+        </div>
       </div>
 
       <div style="margin-bottom: 14px;">
@@ -179,6 +201,95 @@ $galleryItems = $pdo->query("SELECT * FROM gallery_items ORDER BY id DESC")->fet
   </div>
 
 </div>
+
+<script>
+  const gDropZone = document.getElementById('galleryDropZone');
+  const gFileInput = document.getElementById('galleryFileInput');
+  const gPromptEl = document.getElementById('galleryPrompt');
+  const gPreviewEl = document.getElementById('galleryPreview');
+  const gPreviewImg = document.getElementById('galleryPreviewImg');
+  const gFileNameEl = document.getElementById('galleryFileName');
+  const gFileSizeEl = document.getElementById('galleryFileSize');
+  const gCustomUrlInput = document.getElementById('galleryCustomUrl');
+
+  if (gDropZone && gFileInput) {
+    gDropZone.addEventListener('click', (e) => {
+      if (e.target.tagName !== 'BUTTON') {
+        gFileInput.click();
+      }
+    });
+
+    ['dragenter', 'dragover'].forEach(name => {
+      gDropZone.addEventListener(name, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        gDropZone.style.borderColor = 'var(--admin-primary)';
+        gDropZone.style.background = 'rgba(133,46,112,0.06)';
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(name => {
+      gDropZone.addEventListener(name, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        gDropZone.style.borderColor = '#cbd5e1';
+        gDropZone.style.background = '#fafafa';
+      });
+    });
+
+    gDropZone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        gFileInput.files = files;
+        handleGalleryFile(files[0]);
+      }
+    });
+
+    gFileInput.addEventListener('change', () => {
+      if (gFileInput.files.length > 0) {
+        handleGalleryFile(gFileInput.files[0]);
+      }
+    });
+  }
+
+  function handleGalleryFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      gPreviewImg.src = e.target.result;
+      gFileNameEl.textContent = file.name;
+      gFileSizeEl.textContent = (file.size / 1024).toFixed(1) + ' KB (Ready to upload)';
+      gPromptEl.style.display = 'none';
+      gPreviewEl.style.display = 'flex';
+      gCustomUrlInput.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearGalleryImage(e) {
+    if (e) e.stopPropagation();
+    gFileInput.value = '';
+    gPreviewImg.src = '';
+    gPromptEl.style.display = 'flex';
+    gPreviewEl.style.display = 'none';
+    gCustomUrlInput.value = '';
+  }
+
+  if (gCustomUrlInput) {
+    gCustomUrlInput.addEventListener('input', () => {
+      const val = gCustomUrlInput.value.trim();
+      if (val) {
+        gPreviewImg.src = (val.startsWith('http') || val.startsWith('/') ? val : '../' + val);
+        gFileNameEl.textContent = val;
+        gFileSizeEl.textContent = 'Existing Asset / URL';
+        gPromptEl.style.display = 'none';
+        gPreviewEl.style.display = 'flex';
+        gFileInput.value = '';
+      } else {
+        clearGalleryImage();
+      }
+    });
+  }
+</script>
 
 <?php
 require_once __DIR__ . '/includes/admin-footer.php';
