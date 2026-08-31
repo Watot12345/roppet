@@ -51,21 +51,27 @@ if (empty($galleryItems)) {
 
       <!-- Gallery Grid -->
       <div class="services-grid" id="mediaGalleryGrid">
-        <?php foreach ($galleryItems as $item): ?>
-          <div class="service-card" data-category="<?php echo htmlspecialchars($item['category']); ?>">
+        <?php foreach ($galleryItems as $item): 
+          $cat = $item['category'] ?? 'all';
+          $mediaUrl = $item['media_url'] ?? 'assets/images/logo.png';
+          $itemTitle = $item['title'] ?? 'Roppets Production';
+          $isFeat = !empty($item['is_featured']);
+          $caption = !empty($item['caption']) ? $item['caption'] : 'Roppets Edutainment live production showcase.';
+        ?>
+          <div class="service-card" data-category="<?php echo htmlspecialchars($cat); ?>">
             <div class="service-img-wrap" style="height: 240px;">
-              <img src="<?php echo htmlspecialchars($item['media_url']); ?>" alt="<?php echo htmlspecialchars($item['title']); ?>" onerror="this.src='assets/images/logo.png'">
-              <?php if ($item['is_featured']): ?>
+              <img src="<?php echo htmlspecialchars($mediaUrl); ?>" alt="<?php echo htmlspecialchars($itemTitle); ?>" onerror="this.src='assets/images/logo.png'">
+              <?php if ($isFeat): ?>
                 <span class="service-badge" style="background: #f59e0b; color: #fff;">Featured</span>
               <?php endif; ?>
             </div>
             <div class="service-body" style="padding: 20px;">
-              <h3 style="font-size: 17px; margin-bottom: 6px;"><?php echo htmlspecialchars($item['title']); ?></h3>
+              <h3 style="font-size: 17px; margin-bottom: 6px;"><?php echo htmlspecialchars($itemTitle); ?></h3>
               <p style="color: var(--muted-text); font-size: 13.5px; margin-bottom: 12px;">
-                <?php echo htmlspecialchars($item['caption'] ?: 'Roppets Edutainment live production showcase.'); ?>
+                <?php echo htmlspecialchars($caption); ?>
               </p>
               <span class="badge" style="background: rgba(133,46,112,0.1); color: var(--primary); font-size: 11px; align-self: flex-start;">
-                <?php echo strtoupper(htmlspecialchars($item['category'])); ?>
+                <?php echo strtoupper(htmlspecialchars($cat)); ?>
               </span>
             </div>
           </div>

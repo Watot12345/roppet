@@ -57,17 +57,21 @@ if (empty($packages)) {
     <div class="container">
       <div class="packages-grid">
         <?php if (!empty($packages)): ?>
-          <?php foreach ($packages as $p): ?>
-            <div class="package-card <?php echo $p['is_popular'] ? 'popular' : ''; ?>">
-              <?php if ($p['is_popular']): ?>
+          <?php foreach ($packages as $p): 
+            $isPopular = !empty($p['is_popular']);
+            $pkgName = $p['name'] ?? 'Package';
+            $pkgPrice = floatval($p['price'] ?? 0);
+          ?>
+            <div class="package-card <?php echo $isPopular ? 'popular' : ''; ?>">
+              <?php if ($isPopular): ?>
                 <span class="popular-badge">Best Seller</span>
               <?php endif; ?>
               <div class="package-header">
-                <h3 class="package-name"><?php echo htmlspecialchars($p['name']); ?></h3>
+                <h3 class="package-name"><?php echo htmlspecialchars($pkgName); ?></h3>
                 <?php if (!empty($p['subtitle'])): ?>
                   <p class="package-subtitle"><?php echo htmlspecialchars($p['subtitle']); ?></p>
                 <?php endif; ?>
-                <div class="package-price">₱<?php echo number_format($p['price'], 0); ?></div>
+                <div class="package-price">₱<?php echo number_format($pkgPrice, 0); ?></div>
               </div>
               <?php if (!empty($p['features'])): ?>
                 <ul class="package-features">
@@ -81,7 +85,7 @@ if (empty($packages)) {
                   <?php endforeach; ?>
                 </ul>
               <?php endif; ?>
-              <button type="button" class="btn <?php echo $p['is_popular'] ? 'btn-primary' : 'btn-outline'; ?>" data-open-modal="booking" data-service="<?php echo htmlspecialchars($p['name']); ?>">Book Package</button>
+              <button type="button" class="btn <?php echo $isPopular ? 'btn-primary' : 'btn-outline'; ?>" data-open-modal="booking" data-service="<?php echo htmlspecialchars($pkgName); ?>">Book Package</button>
             </div>
           <?php endforeach; ?>
         <?php else: ?>
@@ -104,9 +108,13 @@ if (empty($packages)) {
         <div class="form-group">
           <label class="form-label" style="font-size: 15px;">1. Select Base Package</label>
           <select id="calcBasePackage" class="form-control" style="font-weight: 600;">
-            <?php foreach ($packages as $idx => $p): ?>
-              <option value="<?php echo intval($p['price']); ?>" data-name="<?php echo htmlspecialchars($p['name']); ?>" <?php echo ($p['is_popular'] || $idx === 0) ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($p['name']); ?><?php echo $p['is_popular'] ? ' (Best Value)' : ''; ?> — ₱<?php echo number_format($p['price'], 0); ?>
+            <?php foreach ($packages as $idx => $p): 
+              $isPop = !empty($p['is_popular']);
+              $pName = $p['name'] ?? 'Package';
+              $pPrice = floatval($p['price'] ?? 0);
+            ?>
+              <option value="<?php echo intval($pPrice); ?>" data-name="<?php echo htmlspecialchars($pName); ?>" <?php echo ($isPop || $idx === 0) ? 'selected' : ''; ?>>
+                <?php echo htmlspecialchars($pName); ?><?php echo $isPop ? ' (Best Value)' : ''; ?> — ₱<?php echo number_format($pPrice, 0); ?>
               </option>
             <?php endforeach; ?>
           </select>

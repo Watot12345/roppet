@@ -109,23 +109,26 @@ if (empty($approvedReviews)) {
     $approvedReviews = [
         [
             'client_name' => 'Carmela Santos',
+            'location' => 'Quezon City',
             'event_type' => '7th Birthday Party',
             'rating' => 5,
-            'review_text' => 'The Bubble Show was the absolute highlight of our daughter\'s 7th birthday! The kids and even grandparents were in awe. Truly world-class entertainment!',
+            'comment' => 'The Bubble Show was the absolute highlight of our daughter\'s 7th birthday! The kids and even grandparents were in awe. Truly world-class entertainment!',
             'created_at' => '2026-08-15'
         ],
         [
             'client_name' => 'Atty. Victor Ramirez',
+            'location' => 'Makati City',
             'event_type' => 'Corporate Family Day',
             'rating' => 5,
-            'review_text' => 'Roppets handled our company\'s 500-guest annual family day with flying colors. The puppet stories delivered heartfelt moral lessons. Highly recommended!',
+            'comment' => 'Roppets handled our company\'s 500-guest annual family day with flying colors. The puppet stories delivered heartfelt moral lessons. Highly recommended!',
             'created_at' => '2026-08-10'
         ],
         [
             'client_name' => 'Teacher Maricel Dela Cruz',
+            'location' => 'Ateneo Grade School, QC',
             'event_type' => 'School Edutainment Tour',
             'rating' => 5,
-            'review_text' => 'The Teatro Itim Black Theater show left all our elementary students spellbound. Educational, breathtaking, and very organized production staff.',
+            'comment' => 'The Teatro Itim Black Theater show left all our elementary students spellbound. Educational, breathtaking, and very organized production staff.',
             'created_at' => '2026-08-01'
         ]
     ];
@@ -267,17 +270,24 @@ if (empty($approvedReviews)) {
 
       <div class="services-grid">
         <?php if (!empty($activeServices)): ?>
-          <?php foreach ($activeServices as $s): ?>
-            <div class="service-card" data-category="<?php echo htmlspecialchars($s['category']); ?>">
+          <?php foreach ($activeServices as $s): 
+            $cat = $s['category'] ?? 'all';
+            $title = $s['title'] ?? 'Show';
+            $desc = $s['description'] ?? '';
+            $badge = $s['badge'] ?? '';
+            $imgUrl = $s['image_url'] ?? 'assets/images/logo.png';
+            $price = floatval($s['starting_price'] ?? 0);
+          ?>
+            <div class="service-card" data-category="<?php echo htmlspecialchars($cat); ?>">
               <div class="service-img-wrap">
-                <?php if (!empty($s['badge'])): ?>
-                  <span class="service-badge"><?php echo htmlspecialchars($s['badge']); ?></span>
+                <?php if (!empty($badge)): ?>
+                  <span class="service-badge"><?php echo htmlspecialchars($badge); ?></span>
                 <?php endif; ?>
-                <img src="<?php echo htmlspecialchars($s['image_url']); ?>" alt="<?php echo htmlspecialchars($s['title']); ?>" onerror="this.src='assets/images/logo.png'">
+                <img src="<?php echo htmlspecialchars($imgUrl); ?>" alt="<?php echo htmlspecialchars($title); ?>" onerror="this.src='assets/images/logo.png'">
               </div>
               <div class="service-body">
-                <h3><?php echo htmlspecialchars($s['title']); ?></h3>
-                <p><?php echo htmlspecialchars($s['description']); ?></p>
+                <h3><?php echo htmlspecialchars($title); ?></h3>
+                <p><?php echo htmlspecialchars($desc); ?></p>
                 <?php if (!empty($s['features'])): ?>
                   <ul class="service-features">
                     <?php 
@@ -291,8 +301,8 @@ if (empty($approvedReviews)) {
                   </ul>
                 <?php endif; ?>
                 <div class="service-footer">
-                  <span class="service-price">From ₱<?php echo number_format($s['starting_price'], 0); ?></span>
-                  <button type="button" class="btn btn-primary btn-sm" data-open-modal="booking" data-service="<?php echo htmlspecialchars($s['title']); ?>">Book Now</button>
+                  <span class="service-price">From ₱<?php echo number_format($price, 0); ?></span>
+                  <button type="button" class="btn btn-primary btn-sm" data-open-modal="booking" data-service="<?php echo htmlspecialchars($title); ?>">Book Now</button>
                 </div>
               </div>
             </div>
@@ -394,17 +404,21 @@ if (empty($approvedReviews)) {
 
       <div class="packages-grid">
         <?php if (!empty($activePackages)): ?>
-          <?php foreach ($activePackages as $p): ?>
-            <div class="package-card <?php echo $p['is_popular'] ? 'popular' : ''; ?>">
-              <?php if ($p['is_popular']): ?>
+          <?php foreach ($activePackages as $p): 
+            $isPop = !empty($p['is_popular']);
+            $pName = $p['name'] ?? 'Package';
+            $pPrice = floatval($p['price'] ?? 0);
+          ?>
+            <div class="package-card <?php echo $isPop ? 'popular' : ''; ?>">
+              <?php if ($isPop): ?>
                 <span class="popular-badge">Most Popular Choice</span>
               <?php endif; ?>
               <div class="package-header">
-                <h3 class="package-name"><?php echo htmlspecialchars($p['name']); ?></h3>
+                <h3 class="package-name"><?php echo htmlspecialchars($pName); ?></h3>
                 <?php if (!empty($p['subtitle'])): ?>
                   <p class="package-subtitle"><?php echo htmlspecialchars($p['subtitle']); ?></p>
                 <?php endif; ?>
-                <div class="package-price">₱<?php echo number_format($p['price'], 0); ?> <small>/ event</small></div>
+                <div class="package-price">₱<?php echo number_format($pPrice, 0); ?> <small>/ event</small></div>
               </div>
               <?php if (!empty($p['features'])): ?>
                 <ul class="package-features">
@@ -418,8 +432,8 @@ if (empty($approvedReviews)) {
                   <?php endforeach; ?>
                 </ul>
               <?php endif; ?>
-              <button type="button" class="btn <?php echo $p['is_popular'] ? 'btn-primary' : 'btn-outline'; ?>" data-open-modal="booking" data-service="<?php echo htmlspecialchars($p['name']); ?>">
-                Book <?php echo htmlspecialchars($p['name']); ?>
+              <button type="button" class="btn <?php echo $isPop ? 'btn-primary' : 'btn-outline'; ?>" data-open-modal="booking" data-service="<?php echo htmlspecialchars($pName); ?>">
+                Book <?php echo htmlspecialchars($pName); ?>
               </button>
             </div>
           <?php endforeach; ?>
@@ -480,12 +494,15 @@ if (empty($approvedReviews)) {
         <?php if (!empty($approvedReviews)): ?>
           <?php foreach ($approvedReviews as $r): 
             $initials = '';
-            $names = explode(' ', trim($r['client_name']));
+            $clientName = trim($r['client_name'] ?? 'Client');
+            $names = explode(' ', $clientName);
             foreach ($names as $n) {
               if (!empty($n)) $initials .= strtoupper(substr($n, 0, 1));
             }
             $initials = substr($initials, 0, 2) ?: 'RP';
             $rating = intval($r['rating'] ?? 5);
+            $reviewText = $r['comment'] ?? ($r['review_text'] ?? '');
+            $locationOrType = !empty($r['location']) ? $r['location'] : (!empty($r['event_type']) ? $r['event_type'] : 'Verified Client');
           ?>
             <div class="testimonial-card">
               <div>
@@ -495,14 +512,14 @@ if (empty($approvedReviews)) {
                   <?php endfor; ?>
                 </div>
                 <p class="testimonial-text">
-                  "<?php echo htmlspecialchars($r['comment']); ?>"
+                  "<?php echo htmlspecialchars($reviewText); ?>"
                 </p>
               </div>
               <div class="client-info">
                 <div class="client-avatar"><?php echo htmlspecialchars($initials); ?></div>
                 <div class="client-details">
-                  <h4><?php echo htmlspecialchars($r['client_name']); ?></h4>
-                  <span><?php echo htmlspecialchars($r['location'] ?: ($r['event_type'] ?: 'Verified Client')); ?></span>
+                  <h4><?php echo htmlspecialchars($clientName); ?></h4>
+                  <span><?php echo htmlspecialchars($locationOrType); ?></span>
                 </div>
               </div>
             </div>
