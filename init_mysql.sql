@@ -15,8 +15,9 @@ CREATE TABLE `admin_users` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Default Login: Username: admin | Password: roppets2026!
 INSERT INTO `admin_users` (`username`, `password_hash`, `full_name`, `role`) VALUES
-('admin', '$2y$10$tZ9222cQh3u7fIcx08.x0OSG8q1P/t456/Uv2xL11yK9469eC.E2G', 'Master Administrator', 'super_admin')
+('admin', '$2y$12$z8EITW5BrjHNKVbMHIthxOvJCC/PRhHZU0zdWZgn14MeVqadgRFO6', 'Master Administrator', 'super_admin')
 ON DUPLICATE KEY UPDATE `full_name`=VALUES(`full_name`);
 
 -- 2. System Settings
