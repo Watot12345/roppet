@@ -124,7 +124,7 @@ try {
             :ref, :name, :phone, :email, :event_date,
             :event_type, :service_package, :location, :guest_count,
             :notes, :price, 'Pending'
-        ) RETURNING id
+        )
     ");
 
     $stmt->execute([
@@ -141,7 +141,12 @@ try {
         ':price' => $estimatedPrice
     ]);
 
-    $bookingId = $stmt->fetchColumn();
+    $bookingId = $pdo->lastInsertId();
+    if (empty($bookingId)) {
+        $stmtId = $pdo->prepare("SELECT id FROM bookings WHERE reference_code = :ref LIMIT 1");
+        $stmtId->execute([':ref' => $refCode]);
+        $bookingId = $stmtId->fetchColumn();
+    }
 
     // Trigger Client Email Notification
     sendBookingConfirmationToClient([
