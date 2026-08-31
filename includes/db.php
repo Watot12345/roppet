@@ -6,21 +6,29 @@
 
 // 1. Simple Environment Variables (.env) Loader
 (function() {
-    $envFile = __DIR__ . '/../.env';
-    if (file_exists($envFile)) {
-        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (empty($line) || $line[0] === '#') continue;
-            if (strpos($line, '=') !== false) {
-                list($key, $val) = explode('=', $line, 2);
-                $key = trim($key);
-                $val = trim($val);
-                $val = trim($val, "\"'");
-                putenv("{$key}={$val}");
-                $_ENV[$key] = $val;
-                $_SERVER[$key] = $val;
+    $possibleFiles = [
+        __DIR__ . '/../.env',
+        __DIR__ . '/../.env.production',
+        __DIR__ . '/../.env.local',
+        __DIR__ . '/../env'
+    ];
+    foreach ($possibleFiles as $envFile) {
+        if (file_exists($envFile) && is_readable($envFile)) {
+            $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line) || $line[0] === '#') continue;
+                if (strpos($line, '=') !== false) {
+                    list($key, $val) = explode('=', $line, 2);
+                    $key = trim($key);
+                    $val = trim($val);
+                    $val = trim($val, "\"'");
+                    putenv("{$key}={$val}");
+                    $_ENV[$key] = $val;
+                    $_SERVER[$key] = $val;
+                }
             }
+            break; // Stop after finding the first valid env file
         }
     }
 })();
@@ -40,7 +48,7 @@ function getDBConnection() {
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
-            PDO::ATTR_TIMEOUT => 3,
+            PDO::ATTR_TIMEOUT => 4,
         ];
 
         $attemptConnect = function($drv) use ($options) {
@@ -78,7 +86,7 @@ function getDBConnection() {
                 error_log("Successfully connected to alternate database engine ({$altDriver}).");
             } catch (PDOException $e2) {
                 error_log("Alternate database connection error ({$altDriver}): " . $e2->getMessage());
-                throw new Exception("Database connection failed ({$driver} & {$altDriver}). Please check your database service and .env credentials.");
+                throw new Exception("Database connection failed ({$driver}: " . $e->getMessage() . ")");
             }
         }
     }
