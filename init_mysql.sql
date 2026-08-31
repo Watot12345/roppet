@@ -1,11 +1,8 @@
 -- =======================================================
 -- Roppets Edutainment Production Inc.
 -- MySQL / MariaDB Complete Database Backup Schema & Seed
--- Compatible with XAMPP MySQL, phpMyAdmin, and MySQL 5.7 / 8.0
+-- Compatible with XAMPP MySQL, AwardSpace phpMyAdmin, and MySQL 5.7 / 8.0
 -- =======================================================
-
-CREATE DATABASE IF NOT EXISTS `roppet_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `roppet_db`;
 
 -- 1. Admin Users
 DROP TABLE IF EXISTS `admin_users`;

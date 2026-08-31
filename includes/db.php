@@ -15,11 +15,11 @@
             if (strpos($line, '=') !== false) {
                 list($key, $val) = explode('=', $line, 2);
                 $key = trim($key);
-                $val = trim($val, " \t\n\r\0\x0B\"'");
-                if (!isset($_ENV[$key]) && !getenv($key)) {
-                    putenv("{$key}={$val}");
-                    $_ENV[$key] = $val;
-                }
+                $val = trim($val);
+                $val = trim($val, "\"'");
+                putenv("{$key}={$val}");
+                $_ENV[$key] = $val;
+                $_SERVER[$key] = $val;
             }
         }
     }
