@@ -4,11 +4,26 @@ $currentNav = "gallery";
 include_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/db.php';
 
-$pdo = getDBConnection();
 $galleryItems = [];
 try {
-    $galleryItems = $pdo->query("SELECT * FROM gallery_items ORDER BY is_featured DESC, id ASC")->fetchAll();
-} catch (Exception $e) {}
+    $pdo = getDBConnection();
+    if ($pdo) {
+        $galleryItems = $pdo->query("SELECT * FROM gallery_items ORDER BY is_featured DESC, id ASC")->fetchAll();
+    }
+} catch (Exception $e) {
+    error_log("Gallery page DB offline notice: " . $e->getMessage());
+}
+
+if (empty($galleryItems)) {
+    $galleryItems = [
+        ['title' => 'The Bubble Factory Show', 'category' => 'bubble', 'media_url' => 'assets/images/hero_bubble.jpg', 'caption' => 'The original 3 all-girl performers with giant bubbles and smoke effects.', 'is_featured' => 1],
+        ['title' => 'Roppets Original Hand Puppets', 'category' => 'puppetry', 'media_url' => 'assets/images/puppet_3pigs.jpg', 'caption' => 'Classic portable stage theater with colorful characters and moral stories.', 'is_featured' => 1],
+        ['title' => 'Teatro Itim (Black Theater)', 'category' => 'black-theater', 'media_url' => 'assets/images/black_theater.jpg', 'caption' => 'Fluorescent UV light puppetry and visual illusion effects.', 'is_featured' => 1],
+        ['title' => 'Tali Galaw Marionettes', 'category' => 'puppetry', 'media_url' => 'assets/images/Tali-Galaw-Marionette-Group-1-265x265_c.png', 'caption' => 'Classical string-controlled marionette theater performances.', 'is_featured' => 0],
+        ['title' => 'Custom Mascot: Finn', 'category' => 'mascots', 'media_url' => 'assets/images/finn_adventure.png', 'caption' => 'High-durability lightweight custom character mascot suit.', 'is_featured' => 0],
+        ['title' => 'Custom Hand Puppets', 'category' => 'mascots', 'media_url' => 'assets/images/doc_mcstuffins.jpg', 'caption' => 'Handcrafted puppet characters fabricated in our Quezon City workshop.', 'is_featured' => 0]
+    ];
+}
 ?>
 
   <!-- Page Header -->

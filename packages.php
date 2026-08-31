@@ -4,11 +4,41 @@ $currentNav = "packages";
 include_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/db.php';
 
-$pdo = getDBConnection();
 $packages = [];
 try {
-    $packages = $pdo->query("SELECT * FROM packages WHERE is_active = TRUE ORDER BY sort_order ASC, price ASC")->fetchAll();
-} catch (Exception $e) {}
+    $pdo = getDBConnection();
+    if ($pdo) {
+        $packages = $pdo->query("SELECT * FROM packages WHERE is_active = TRUE ORDER BY sort_order ASC, price ASC")->fetchAll();
+    }
+} catch (Exception $e) {
+    error_log("Packages page DB offline notice: " . $e->getMessage());
+}
+
+if (empty($packages)) {
+    $packages = [
+        [
+            'name' => 'Package A: Classic Puppet Fiesta',
+            'subtitle' => 'Perfect for Kiddie Birthday Parties (1.5 Hours)',
+            'price' => 15000,
+            'is_popular' => false,
+            'features' => "1.5 Hour Comprehensive Program\nHand Puppet Show (3 Moral Stories)\nProfessional Party Host & Game Master\nClassroom / Living Room Stage Setup\nSound System with Sound Effects"
+        ],
+        [
+            'name' => 'Package B: Grand Edutainment Extravaganza',
+            'subtitle' => 'Our Most Popular All-In-One Family Celebration',
+            'price' => 25000,
+            'is_popular' => true,
+            'features' => "Full 2.5 Hour Event Production\nHand Puppet Show or Marionette Show\nThe Original Bubble Show (3 Performers)\nFancy Comedy Magic Show\n1 Character Mascot Appearance\nFull Sound System & Operator"
+        ],
+        [
+            'name' => 'Package C: Ultimate Festival Spectacular',
+            'subtitle' => 'Designed for School Fairs, Malls & Corporate Family Days',
+            'price' => 38000,
+            'is_popular' => false,
+            'features' => "Full 3.5 Hour Stage Production\nTeatro Itim (Black Theater Show)\nThe Famous Bubble Factory Show\nMaster Marionette (Tali Galaw) Act\n2 Character Mascots & Party Hosts\nPro Audio & Stage Lighting Rig"
+        ]
+    ];
+}
 ?>
 
   <!-- Page Header -->

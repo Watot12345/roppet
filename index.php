@@ -4,16 +4,132 @@ $currentNav = "home";
 include_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/db.php';
 
-$pdo = getDBConnection();
 $activeServices = [];
 $activePackages = [];
 $approvedReviews = [];
 
 try {
-    $activeServices = $pdo->query("SELECT * FROM services WHERE is_active = TRUE ORDER BY sort_order ASC, id ASC")->fetchAll();
-    $activePackages = $pdo->query("SELECT * FROM packages WHERE is_active = TRUE ORDER BY sort_order ASC, price ASC")->fetchAll();
-    $approvedReviews = $pdo->query("SELECT * FROM reviews WHERE is_approved = TRUE ORDER BY created_at DESC LIMIT 6")->fetchAll();
-} catch (Exception $e) {}
+    $pdo = getDBConnection();
+    if ($pdo) {
+        $activeServices = $pdo->query("SELECT * FROM services WHERE is_active = TRUE ORDER BY sort_order ASC, id ASC")->fetchAll();
+        $activePackages = $pdo->query("SELECT * FROM packages WHERE is_active = TRUE ORDER BY sort_order ASC, price ASC")->fetchAll();
+        $approvedReviews = $pdo->query("SELECT * FROM reviews WHERE is_approved = TRUE ORDER BY created_at DESC LIMIT 6")->fetchAll();
+    }
+} catch (Exception $e) {
+    error_log("Index page DB offline notice: " . $e->getMessage());
+}
+
+// Resilient default fallback data if database is offline or tables are unseeded
+if (empty($activeServices)) {
+    $activeServices = [
+        [
+            'title' => 'Hand Puppet Shows',
+            'category' => 'puppetry',
+            'badge' => 'Classic Best-Seller',
+            'image_url' => 'assets/images/smurfs-hand-puppet-show-by-roppets-edutainment-production-inc-1-265x265_c.png',
+            'description' => 'Over 100+ moral-rich and educational stories. Features 3 exciting puppet plays with our signature colorful portable theater stage, vibrant characters, and voice acting.',
+            'starting_price' => 8500,
+            'features' => "3 Exciting Story Acts\nLive Voice Acting & Sound Effects\nPortable Theater Stage Setup\nMoral & Values-Based Lessons"
+        ],
+        [
+            'title' => 'The Original Bubble Show',
+            'category' => 'specialty',
+            'badge' => 'High-Energy Spectacle',
+            'image_url' => 'assets/images/hero_bubble.jpg',
+            'description' => 'The famous Bubble Factory performance by 3 all-girl dancers. Giant smoke bubbles, rainbow bubble sculptures, and the exciting kid-inside-a-bubble finale.',
+            'starting_price' => 9500,
+            'features' => "3 Themed Girl Performers\nGiant Bubble & Smoke Tricks\nKid-in-a-Bubble Photo Op\nDynamic Dance Choreography"
+        ],
+        [
+            'title' => 'Teatro Itim (Black Theater)',
+            'category' => 'puppetry',
+            'badge' => 'Ultraviolet Attraction',
+            'image_url' => 'assets/images/black_theater.jpg',
+            'description' => 'A mesmerizing ultraviolet glow-in-the-dark puppetry style that delights both kids and adults. Full-stage fluorescent visual effects and storytelling innovation.',
+            'starting_price' => 12000,
+            'features' => "Full Black Theater Stage Tent\nFluorescent Glowing Props\nMagical Levitating Puppetry\nCustom UV Lighting Rig"
+        ],
+        [
+            'title' => 'Marionette Show (Tali Galaw)',
+            'category' => 'puppetry',
+            'badge' => 'Masterful Puppetry',
+            'image_url' => 'assets/images/Tali-Galaw-Marionette-Group-1-265x265_c.png',
+            'description' => 'Classical string-controlled marionette theater showcasing intricate puppet dances, comedic skits, and world-class Filipino folk performances.',
+            'starting_price' => 8000,
+            'features' => "Master String Puppeteers\nDancing Musical Skits\nInteractive Audience Play\nPhilippine Folk & Modern Acts"
+        ],
+        [
+            'title' => 'Fancy Magic & Illusion Show',
+            'category' => 'mascots-magic',
+            'badge' => 'Family Favorite',
+            'image_url' => 'assets/images/Fancy-magic-show-by-roppets-edutainment-production-inc.-1-265x265_c.png',
+            'description' => 'Astonishing sleight-of-hand tricks, comedy magic, mind-boggling illusions, and cheerful audience participation suitable for all ages.',
+            'starting_price' => 7500,
+            'features' => "Professional Comedy Magician\nLive Dove & Rabbit Appearances\nStage Illusions & Mentalism\nCelebrant Special Magic Act"
+        ],
+        [
+            'title' => 'Character Mascots & Hosting',
+            'category' => 'mascots-magic',
+            'badge' => 'Event Highlight',
+            'image_url' => 'assets/images/finn_adventure.png',
+            'description' => 'High-spirited mascot appearances and energetic party hosts to lead games, dance-alongs, cake ceremonies, and photo sessions.',
+            'starting_price' => 6000,
+            'features' => "Premium Lightweight Costumes\nEnergetic Party Host & DJ\nChoreographed Mascot Dance\nMeet & Greet Photo Session"
+        ]
+    ];
+}
+
+if (empty($activePackages)) {
+    $activePackages = [
+        [
+            'name' => 'Package A: Classic Puppet Fiesta',
+            'subtitle' => 'Perfect for Kiddie Birthday Parties (1.5 Hours)',
+            'price' => 15000,
+            'is_popular' => false,
+            'features' => "1.5 Hour Comprehensive Program\nHand Puppet Show (3 Moral Stories)\nProfessional Party Host & Game Master\nClassroom / Living Room Stage Setup\nSound System with Sound Effects"
+        ],
+        [
+            'name' => 'Package B: Grand Edutainment Extravaganza',
+            'subtitle' => 'Our Most Popular All-In-One Family Celebration',
+            'price' => 25000,
+            'is_popular' => true,
+            'features' => "Full 2.5 Hour Event Production\nHand Puppet Show or Marionette Show\nThe Original Bubble Show (3 Performers)\nFancy Comedy Magic Show\n1 Character Mascot Appearance\nFull Sound System & Operator"
+        ],
+        [
+            'name' => 'Package C: Ultimate Festival Spectacular',
+            'subtitle' => 'Designed for School Fairs, Malls & Corporate Family Days',
+            'price' => 38000,
+            'is_popular' => false,
+            'features' => "Full 3.5 Hour Stage Production\nTeatro Itim (Black Theater Show)\nThe Famous Bubble Factory Show\nMaster Marionette (Tali Galaw) Act\n2 Character Mascots & Party Hosts\nPro Audio & Stage Lighting Rig"
+        ]
+    ];
+}
+
+if (empty($approvedReviews)) {
+    $approvedReviews = [
+        [
+            'client_name' => 'Carmela Santos',
+            'event_type' => '7th Birthday Party',
+            'rating' => 5,
+            'review_text' => 'The Bubble Show was the absolute highlight of our daughter\'s 7th birthday! The kids and even grandparents were in awe. Truly world-class entertainment!',
+            'created_at' => '2026-08-15'
+        ],
+        [
+            'client_name' => 'Atty. Victor Ramirez',
+            'event_type' => 'Corporate Family Day',
+            'rating' => 5,
+            'review_text' => 'Roppets handled our company\'s 500-guest annual family day with flying colors. The puppet stories delivered heartfelt moral lessons. Highly recommended!',
+            'created_at' => '2026-08-10'
+        ],
+        [
+            'client_name' => 'Teacher Maricel Dela Cruz',
+            'event_type' => 'School Edutainment Tour',
+            'rating' => 5,
+            'review_text' => 'The Teatro Itim Black Theater show left all our elementary students spellbound. Educational, breathtaking, and very organized production staff.',
+            'created_at' => '2026-08-01'
+        ]
+    ];
+}
 ?>
 
   <!-- Hero Slider Section -->

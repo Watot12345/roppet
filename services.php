@@ -4,17 +4,32 @@ $currentNav = "services";
 include_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/db.php';
 
-$pdo = getDBConnection();
 $activeServices = [];
 $activeStories = [];
 $serviceMap = [];
 try {
-    $activeServices = $pdo->query("SELECT * FROM services WHERE is_active = TRUE ORDER BY sort_order ASC, id ASC")->fetchAll();
-    $activeStories = $pdo->query("SELECT * FROM puppet_stories WHERE is_active = TRUE ORDER BY id ASC")->fetchAll();
-    foreach ($activeServices as $srv) {
-        $serviceMap[$srv['slug']] = $srv;
+    $pdo = getDBConnection();
+    if ($pdo) {
+        $activeServices = $pdo->query("SELECT * FROM services WHERE is_active = TRUE ORDER BY sort_order ASC, id ASC")->fetchAll();
+        $activeStories = $pdo->query("SELECT * FROM puppet_stories WHERE is_active = TRUE ORDER BY id ASC")->fetchAll();
+        foreach ($activeServices as $srv) {
+            $serviceMap[$srv['slug']] = $srv;
+        }
     }
-} catch (Exception $e) {}
+} catch (Exception $e) {
+    error_log("Services page DB offline notice: " . $e->getMessage());
+}
+
+if (empty($activeStories)) {
+    $activeStories = [
+        ['title' => 'Si Pagong at si Matsing (The Turtle & Monkey)', 'theme' => 'Fairness, humility, and cleverness over greed', 'category' => 'Filipino Folklore', 'summary' => 'A classic Philippine folklore showing how greedy Monkey gets outsmarted by patient, honest Turtle.'],
+        ['title' => 'Ang Langgam at ang Tipaklong (The Ant & Grasshopper)', 'theme' => 'Hard work, preparedness, and foresight', 'category' => 'Aesop Fable', 'summary' => 'Ant works tirelessly gathering food for rainy seasons while Grasshopper plays, teaching kids the value of diligent preparation.'],
+        ['title' => 'Ang Leon at ang Daga (The Lion & The Mouse)', 'theme' => 'Kindness, mercy, and mutual respect', 'category' => 'Moral Story', 'summary' => 'Little Mouse saves mighty King Lion from hunters net, proving that even the smallest friend can be of great help.'],
+        ['title' => 'Ang Batang Sinungaling (The Boy Who Cried Wolf)', 'theme' => 'Honesty and trust in the community', 'category' => 'Values Formation', 'summary' => 'Teaches young children that continuous lying destroys trust, and why truthfulness is always the best virtue.'],
+        ['title' => 'The Prodigal Son', 'theme' => 'Forgiveness, family love, and repentance', 'category' => 'Spiritual / Biblical', 'summary' => 'An inspiring story of unconditional parental love and repentance adapted for kids with fun character puppetry.'],
+        ['title' => 'Ang Mahiwagang Palakol (The Golden Axe)', 'theme' => 'Integrity, contentment, and truthfulness', 'category' => 'Moral Story', 'summary' => 'An honest woodcutter is rewarded for speaking the truth, while a greedy neighbor loses everything for lying.']
+    ];
+}
 
 function findSrv($map, $key, $defaultTitle, $defaultPrice, $defaultDesc = '') {
     if (isset($map[$key])) {

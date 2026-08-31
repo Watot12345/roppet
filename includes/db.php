@@ -40,10 +40,11 @@ function getDBConnection() {
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::ATTR_TIMEOUT => 3,
         ];
 
-        try {
-            if ($driver === 'mysql') {
+        $attemptConnect = function($drv) use ($options) {
+            if ($drv === 'mysql') {
                 $host = getenv('MYSQL_HOST') ?: (getenv('DB_HOST') ?: '127.0.0.1');
                 $port = getenv('MYSQL_PORT') ?: '3306';
                 $name = getenv('MYSQL_NAME') ?: 'roppet_db';
@@ -51,9 +52,8 @@ function getDBConnection() {
                 $pass = getenv('MYSQL_PASS') ?: '';
                 
                 $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
-                $pdo = new PDO($dsn, $user, $pass, $options);
+                return new PDO($dsn, $user, $pass, $options);
             } else {
-                // Default: PostgreSQL / Neon Cloud DB
                 $host = getenv('DB_HOST') ?: 'ep-wild-wind-ayk3w0b8.c-5.us-east-2.aws.neon.tech';
                 $port = getenv('DB_PORT') ?: '5432';
                 $name = getenv('DB_NAME') ?: 'neondb';
@@ -62,11 +62,24 @@ function getDBConnection() {
                 $sslmode = getenv('DB_SSLMODE') ?: 'require';
 
                 $dsn = "pgsql:host={$host};port={$port};dbname={$name};sslmode={$sslmode}";
-                $pdo = new PDO($dsn, $user, $pass, $options);
+                return new PDO($dsn, $user, $pass, $options);
             }
+        };
+
+        try {
+            $pdo = $attemptConnect($driver);
         } catch (PDOException $e) {
-            error_log("Database connection error ({$driver}): " . $e->getMessage());
-            throw new Exception("Database connection failed ({$driver}). Please verify database credentials.");
+            error_log("Primary database connection error ({$driver}): " . $e->getMessage());
+            
+            // Try alternate driver failover
+            $altDriver = ($driver === 'mysql') ? 'pgsql' : 'mysql';
+            try {
+                $pdo = $attemptConnect($altDriver);
+                error_log("Successfully connected to alternate database engine ({$altDriver}).");
+            } catch (PDOException $e2) {
+                error_log("Alternate database connection error ({$altDriver}): " . $e2->getMessage());
+                throw new Exception("Database connection failed ({$driver} & {$altDriver}). Please check your database service and .env credentials.");
+            }
         }
     }
     return $pdo;
