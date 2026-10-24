@@ -42,7 +42,7 @@ $sql = "SELECT * FROM bookings WHERE 1=1";
 $params = [];
 
 if (!empty($search)) {
-    $sql .= " AND (name ILIKE :s OR email ILIKE :s OR phone ILIKE :s OR reference_code ILIKE :s)";
+    $sql .= " AND (LOWER(name) LIKE LOWER(:s) OR LOWER(email) LIKE LOWER(:s) OR LOWER(phone) LIKE LOWER(:s) OR LOWER(reference_code) LIKE LOWER(:s))";
     $params[':s'] = "%$search%";
 }
 

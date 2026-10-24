@@ -1,8 +1,11 @@
 -- =======================================================
 -- Roppets Edutainment Production Inc.
 -- MySQL / MariaDB Complete Database Backup Schema & Seed
--- Compatible with XAMPP MySQL, AwardSpace phpMyAdmin, and MySQL 5.7 / 8.0
+-- Compatible with XAMPP MySQL, phpMyAdmin, and MySQL 5.7 / 8.0
 -- =======================================================
+
+CREATE DATABASE IF NOT EXISTS `roppet_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `roppet_db`;
 
 -- 1. Admin Users
 DROP TABLE IF EXISTS `admin_users`;
@@ -15,9 +18,8 @@ CREATE TABLE `admin_users` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Default Login: Username: admin | Password: roppets2026!
 INSERT INTO `admin_users` (`username`, `password_hash`, `full_name`, `role`) VALUES
-('admin', '$2y$12$z8EITW5BrjHNKVbMHIthxOvJCC/PRhHZU0zdWZgn14MeVqadgRFO6', 'Master Administrator', 'super_admin')
+('admin', '$2y$10$tZ9222cQh3u7fIcx08.x0OSG8q1P/t456/Uv2xL11yK9469eC.E2G', 'Master Administrator', 'super_admin')
 ON DUPLICATE KEY UPDATE `full_name`=VALUES(`full_name`);
 
 -- 2. System Settings

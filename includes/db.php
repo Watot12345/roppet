@@ -1,7 +1,7 @@
 <?php
 /**
  * Roppets Edutainment Production Inc.
- * Dual-Engine Database Connector (PostgreSQL / Neon & MySQL / MariaDB)
+ * Database Connector (Supabase Cloud PostgreSQL & MySQL / MariaDB)
  */
 
 // 1. Simple Environment Variables (.env) Loader
@@ -48,7 +48,7 @@ function getDBConnection() {
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
-            PDO::ATTR_TIMEOUT => 4,
+            PDO::ATTR_TIMEOUT => 6,
         ];
 
         $attemptConnect = function($drv) use ($options) {
@@ -62,15 +62,27 @@ function getDBConnection() {
                 $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
                 return new PDO($dsn, $user, $pass, $options);
             } else {
-                $host = getenv('DB_HOST') ?: 'ep-wild-wind-ayk3w0b8.c-5.us-east-2.aws.neon.tech';
+                // Supabase PostgreSQL Configuration
+                $host = getenv('DB_HOST') ?: 'aws-0-ap-south-1.pooler.supabase.com';
                 $port = getenv('DB_PORT') ?: '5432';
-                $name = getenv('DB_NAME') ?: 'neondb';
-                $user = getenv('DB_USER') ?: 'neondb_owner';
-                $pass = getenv('DB_PASS') ?: '';
+                $name = getenv('DB_NAME') ?: 'postgres';
+                $user = getenv('DB_USER') ?: 'postgres.olrpqobxouiyymvujxkw';
+                $pass = getenv('DB_PASS') ?: '0P1wihBtE2MFfEc4';
                 $sslmode = getenv('DB_SSLMODE') ?: 'require';
 
-                $dsn = "pgsql:host={$host};port={$port};dbname={$name};sslmode={$sslmode}";
-                return new PDO($dsn, $user, $pass, $options);
+                try {
+                    $dsn = "pgsql:host={$host};port={$port};dbname={$name};sslmode={$sslmode}";
+                    return new PDO($dsn, $user, $pass, $options);
+                } catch (PDOException $pe) {
+                    // If connecting via direct host fails (e.g. IPv6 unavailable on client), retry via pooler
+                    if (strpos($host, 'supabase.co') !== false && $host !== 'aws-0-ap-south-1.pooler.supabase.com') {
+                        $poolerHost = 'aws-0-ap-south-1.pooler.supabase.com';
+                        $poolerUser = (strpos($user, '.') !== false) ? $user : 'postgres.olrpqobxouiyymvujxkw';
+                        $poolerDsn = "pgsql:host={$poolerHost};port={$port};dbname={$name};sslmode={$sslmode}";
+                        return new PDO($poolerDsn, $poolerUser, $pass, $options);
+                    }
+                    throw $pe;
+                }
             }
         };
 
@@ -106,4 +118,15 @@ function getSystemSetting($key, $default = '') {
     } catch (Exception $e) {
         return $default;
     }
+}
+
+/**
+ * Supabase Configuration Helper
+ */
+function getSupabaseConfig() {
+    return [
+        'url' => getenv('SUPABASE_URL') ?: 'https://olrpqobxouiyymvujxkw.supabase.co',
+        'ref' => getenv('SUPABASE_REF') ?: 'olrpqobxouiyymvujxkw',
+        'service_role_key' => getenv('SUPABASE_SERVICE_ROLE_KEY') ?: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9scnBxb2J4b3VpeXltdnVqeGt3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5Mjg1MjYxNiwiZXhwIjoyMTA4NDI4NjE2fQ.6Ai3FRlga7CjevSnX5ww7hLeJFRJKT1kxoUklIAqnMs'
+    ];
 }

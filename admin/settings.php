@@ -32,11 +32,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         ];
 
         try {
-            $stmt = $pdo->prepare("
-                INSERT INTO system_settings (setting_key, setting_value)
-                VALUES (?, ?)
-                ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = CURRENT_TIMESTAMP
-            ");
+            $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+            if ($driver === 'mysql') {
+                $stmt = $pdo->prepare("
+                    INSERT INTO system_settings (setting_key, setting_value)
+                    VALUES (?, ?)
+                    ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = CURRENT_TIMESTAMP
+                ");
+            } else {
+                $stmt = $pdo->prepare("
+                    INSERT INTO system_settings (setting_key, setting_value)
+                    VALUES (?, ?)
+                    ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = CURRENT_TIMESTAMP
+                ");
+            }
             foreach ($fields as $k => $v) {
                 $stmt->execute([$k, $v]);
             }
