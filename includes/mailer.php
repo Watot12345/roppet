@@ -60,7 +60,10 @@ function sendNotificationEmail($toEmail, $recipientName, $subject, $messageHtml)
         $statusText
     );
 
-    $logFile = __DIR__ . '/../uploads/mail_logs.txt';
+    $uploadsDir = __DIR__ . '/../uploads';
+    $logFile = (is_dir($uploadsDir) && is_writable($uploadsDir)) 
+        ? $uploadsDir . '/mail_logs.txt' 
+        : sys_get_temp_dir() . '/mail_logs.txt';
     @file_put_contents($logFile, $logEntry, FILE_APPEND);
 
     return $sent;
