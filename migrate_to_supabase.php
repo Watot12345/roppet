@@ -7,19 +7,19 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Source: Neon PostgreSQL
-$sourceHost = 'ep-wild-wind-ayk3w0b8.c-5.us-east-2.aws.neon.tech';
-$sourcePort = '5432';
-$sourceDb   = 'neondb';
-$sourceUser = 'neondb_owner';
-$sourcePass = 'npg_38tOXpeWgyQo';
+// Source: Neon PostgreSQL (read from environment)
+$sourceHost = getenv('SOURCE_DB_HOST') ?: '';
+$sourcePort = getenv('SOURCE_DB_PORT') ?: '5432';
+$sourceDb   = getenv('SOURCE_DB_NAME') ?: 'neondb';
+$sourceUser = getenv('SOURCE_DB_USER') ?: '';
+$sourcePass = getenv('SOURCE_DB_PASS') ?: '';
 
-// Target: Supabase PostgreSQL (via Supavisor pooler for dual-stack IPv4/IPv6 support)
-$targetHost = 'aws-0-ap-south-1.pooler.supabase.com';
-$targetPort = '5432';
-$targetDb   = 'postgres';
-$targetUser = 'postgres.olrpqobxouiyymvujxkw';
-$targetPass = '0P1wihBtE2MFfEc4';
+// Target: Supabase PostgreSQL (read from environment)
+$targetHost = getenv('DB_HOST') ?: '';
+$targetPort = getenv('DB_PORT') ?: '5432';
+$targetDb   = getenv('DB_NAME') ?: 'postgres';
+$targetUser = getenv('DB_USER') ?: '';
+$targetPass = getenv('DB_PASS') ?: '';
 
 echo "====================================================\n";
 echo "Starting Migration & Transfer to Supabase...\n";
