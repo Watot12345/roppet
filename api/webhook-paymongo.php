@@ -50,17 +50,17 @@ if ($eventType === 'checkout_session.payment.paid') {
                 // 1. Insert verified payment record
                 $insPay = $pdo->prepare("
                     INSERT INTO payments (
-                        booking_id, amount, payment_method, transaction_ref, status, admin_notes, verified_at
+                        booking_id, reference_code, amount, payment_method, transaction_ref, status, admin_notes, verified_at
                     ) VALUES (
-                        ?, ?, ?, ?, 'Verified', 'Automated PayMongo Webhook Reconciliation', CURRENT_TIMESTAMP
+                        ?, ?, ?, ?, ?, 'Verified', 'Automated PayMongo Webhook Reconciliation', CURRENT_TIMESTAMP
                     )
                 ");
-                $insPay->execute([$bookingId, $amountPaid, ucfirst($paymentSource), $paymongoId]);
+                $insPay->execute([$bookingId, $refCode, $amountPaid, ucfirst($paymentSource), $paymongoId]);
 
                 // 2. Update booking status
                 $updBook = $pdo->prepare("
                     UPDATE bookings
-                    SET status = 'Downpayment Paid', downpayment_amount = downpayment_amount + ?
+                    SET status = 'Downpayment Paid', payment_status = 'Downpayment Paid', downpayment_amount = downpayment_amount + ?
                     WHERE id = ?
                 ");
                 $updBook->execute([$amountPaid, $bookingId]);
@@ -77,6 +77,7 @@ if ($eventType === 'checkout_session.payment.paid') {
             }
         } catch (Exception $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log("webhook-paymongo.php error: " . $e->getMessage());
         }
     }
 }

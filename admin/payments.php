@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             // 2. Update Booking status
             $stmt2 = $pdo->prepare("
                 UPDATE bookings
-                SET status = 'Downpayment Paid', downpayment_amount = downpayment_amount + :amt
+                SET status = 'Downpayment Paid', payment_status = 'Downpayment Paid', downpayment_amount = downpayment_amount + :amt
                 WHERE id = :bid
             ");
             $stmt2->execute([':amt' => $amount, ':bid' => $bookingId]);

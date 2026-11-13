@@ -29,14 +29,14 @@ if (!empty($refCode)) {
                 $transRef = 'PM-' . strtoupper(bin2hex(random_bytes(4)));
 
                 $ins = $pdo->prepare("
-                    INSERT INTO payments (booking_id, amount, payment_method, transaction_ref, status, admin_notes, verified_at)
-                    VALUES (?, ?, ?, ?, 'Verified', 'Instant PayMongo Gateway Payment', CURRENT_TIMESTAMP)
+                    INSERT INTO payments (booking_id, reference_code, amount, payment_method, transaction_ref, status, admin_notes, verified_at)
+                    VALUES (?, ?, ?, ?, ?, 'Verified', 'Instant PayMongo Gateway Payment', CURRENT_TIMESTAMP)
                 ");
-                $ins->execute([$booking['id'], $amount, $method, $transRef]);
+                $ins->execute([$booking['id'], $refCode, $amount, $method, $transRef]);
 
                 $upd = $pdo->prepare("
                     UPDATE bookings
-                    SET status = 'Downpayment Paid', downpayment_amount = downpayment_amount + ?
+                    SET status = 'Downpayment Paid', payment_status = 'Downpayment Paid', downpayment_amount = downpayment_amount + ?
                     WHERE id = ?
                 ");
                 $upd->execute([$amount, $booking['id']]);
@@ -45,7 +45,12 @@ if (!empty($refCode)) {
                 logStaffActivity('PayMongo Gateway', 'Auto-Verified Downpayment', "Ref: {$refCode}, Amount: ₱{$amount} via {$method}");
             }
         }
-    } catch (Exception $e) {}
+    } catch (Exception $e) {
+        if (isset($pdo) && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log("payment-success.php error: " . $e->getMessage());
+    }
 }
 ?>
 

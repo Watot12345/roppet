@@ -133,13 +133,14 @@ try {
         "CREATE TABLE IF NOT EXISTS payments (
             id SERIAL PRIMARY KEY,
             booking_id INT REFERENCES bookings(id) ON DELETE CASCADE,
-            reference_code VARCHAR(30) NOT NULL,
+            reference_code VARCHAR(30),
             payment_method VARCHAR(50) NOT NULL,
             transaction_ref VARCHAR(100),
             amount NUMERIC(10, 2) NOT NULL,
             receipt_file VARCHAR(255),
             status VARCHAR(50) DEFAULT 'Pending Review',
             admin_notes TEXT,
+            verified_at TIMESTAMP NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )",
         "CREATE INDEX IF NOT EXISTS idx_payments_booking ON payments(booking_id)",

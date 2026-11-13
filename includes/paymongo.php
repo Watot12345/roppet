@@ -31,7 +31,14 @@ class PayMongoGateway {
         $refCode = $booking['reference_code'];
         $amountInCents = intval(round($amount * 100)); // PayMongo expects cents
 
-        $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "/roppet";
+        $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+        $scheme = $isHttps ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $scriptDir = dirname(dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+        $subPath = (strpos($_SERVER['REQUEST_URI'] ?? '', '/roppet/') === 0) ? '/roppet' : rtrim($scriptDir, '/\\');
+        if ($subPath === '.' || $subPath === '/api') $subPath = '';
+        $baseUrl = "{$scheme}://{$host}{$subPath}";
         
         $successUrl = "{$baseUrl}/payment-success.php?ref=" . urlencode($refCode) . "&amount=" . urlencode($amount);
         $cancelUrl = "{$baseUrl}/payment-cancel.php?ref=" . urlencode($refCode);
