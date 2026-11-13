@@ -10,10 +10,17 @@ if (!isset($adminActiveNav)) {
 }
 
 $pdoHeader = getDBConnection();
-$pendingPaymentsCount = $pdoHeader->query("SELECT COUNT(*) FROM payments WHERE status = 'Pending Review'")->fetchColumn();
-$unreadInquiriesCount = $pdoHeader->query("SELECT COUNT(*) FROM inquiries WHERE status = 'Unread'")->fetchColumn();
-$pendingFabQuotesCount = $pdoHeader->query("SELECT COUNT(*) FROM fabrication_quotes WHERE status = 'Under Review'")->fetchColumn();
-$pendingReviewsCount = $pdoHeader->query("SELECT COUNT(*) FROM reviews WHERE is_approved = FALSE")->fetchColumn();
+$headerCounts = $pdoHeader->query("
+    SELECT
+        (SELECT COUNT(*) FROM payments WHERE status = 'Pending Review') AS pending_payments,
+        (SELECT COUNT(*) FROM inquiries WHERE status = 'Unread') AS unread_inquiries,
+        (SELECT COUNT(*) FROM fabrication_quotes WHERE status = 'Under Review') AS pending_fab_quotes,
+        (SELECT COUNT(*) FROM reviews WHERE is_approved = FALSE) AS pending_reviews
+")->fetch();
+$pendingPaymentsCount = intval($headerCounts['pending_payments'] ?? 0);
+$unreadInquiriesCount = intval($headerCounts['unread_inquiries'] ?? 0);
+$pendingFabQuotesCount = intval($headerCounts['pending_fab_quotes'] ?? 0);
+$pendingReviewsCount = intval($headerCounts['pending_reviews'] ?? 0);
 ?>
 <!DOCTYPE html>
 <html lang="en">
