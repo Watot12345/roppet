@@ -5,12 +5,20 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 $pdo = getDBConnection();
 
-// Fetch summary metrics
-$totalBookings = $pdo->query("SELECT COUNT(*) FROM bookings")->fetchColumn();
-$pendingBookings = $pdo->query("SELECT COUNT(*) FROM bookings WHERE status = 'Pending'")->fetchColumn();
-$confirmedBookings = $pdo->query("SELECT COUNT(*) FROM bookings WHERE status IN ('Confirmed', 'Downpayment Paid')")->fetchColumn();
-$totalInquiries = $pdo->query("SELECT COUNT(*) FROM inquiries WHERE status = 'Unread'")->fetchColumn();
-$pipelineRevenue = $pdo->query("SELECT COALESCE(SUM(total_price), 0) FROM bookings WHERE status NOT IN ('Cancelled')")->fetchColumn();
+// Fetch summary metrics (single aggregate query for bookings to minimize latency)
+$bookingMetrics = $pdo->query("
+    SELECT
+        COUNT(*) AS total_bookings,
+        COALESCE(SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END), 0) AS pending_bookings,
+        COALESCE(SUM(CASE WHEN status IN ('Confirmed', 'Downpayment Paid') THEN 1 ELSE 0 END), 0) AS confirmed_bookings,
+        COALESCE(SUM(CASE WHEN status NOT IN ('Cancelled') THEN total_price ELSE 0 END), 0) AS pipeline_revenue
+    FROM bookings
+")->fetch();
+$totalBookings = intval($bookingMetrics['total_bookings'] ?? 0);
+$pendingBookings = intval($bookingMetrics['pending_bookings'] ?? 0);
+$confirmedBookings = intval($bookingMetrics['confirmed_bookings'] ?? 0);
+$pipelineRevenue = floatval($bookingMetrics['pipeline_revenue'] ?? 0);
+$totalInquiries = intval($pdo->query("SELECT COUNT(*) FROM inquiries WHERE status = 'Unread'")->fetchColumn());
 
 // Fetch recent bookings
 $recentBookings = $pdo->query("SELECT * FROM bookings ORDER BY created_at DESC LIMIT 6")->fetchAll();

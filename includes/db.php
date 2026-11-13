@@ -102,12 +102,14 @@ function getDBConnection() {
  * Global System Settings Helper
  */
 function getSystemSetting($key, $default = '') {
+    static $settingsCache = null;
     try {
-        $pdo = getDBConnection();
-        $stmt = $pdo->prepare("SELECT setting_value FROM system_settings WHERE setting_key = ? LIMIT 1");
-        $stmt->execute([$key]);
-        $val = $stmt->fetchColumn();
-        return ($val !== false && $val !== null) ? $val : $default;
+        if ($settingsCache === null) {
+            $pdo = getDBConnection();
+            $rows = $pdo->query("SELECT setting_key, setting_value FROM system_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
+            $settingsCache = is_array($rows) ? $rows : [];
+        }
+        return (isset($settingsCache[$key]) && $settingsCache[$key] !== null) ? $settingsCache[$key] : $default;
     } catch (Exception $e) {
         return $default;
     }
